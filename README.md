@@ -8,11 +8,13 @@ The primary goal of releasing these datasets is to provide a benchmark for the r
 
 ## Thesis Abstract
 
-Industrial robots, despite high repeatability, often exhibit insufficient absolute positioning accuracy, limiting their use in precision-critical applications. This thesis addresses this by developing and evaluating an innovative hybrid error compensation model to significantly enhance the pose accuracy of serial industrial robots. The objective was to systematically address both geometric and non-geometric errors by integrating interpretable parametric kinematic modeling (Modified Denavit-Hartenberg - MDH) with a modern deep learning architecture (Attention-based Spatial-Temporal Graph Convolutional Network - ASTGCN).
+With advancing industrial automation, industrial robots are increasingly utilized in manufacturing, assembly, precision machining, and other fields. Although industrial robots usually have excellent repetitive positioning accuracy, their absolute positioning accuracy often fails to meet the requirements of high‑precision tasks, where positional errors can lead to significant performance degradation and operational instability. Improving the absolute positioning accuracy of industrial robots has thus become an important research direction to ensure the reliability and flexibility of intelligent manufacturing.
 
-The proposed hybrid framework features a two-stage process: MDH calibration first establishes an accurate geometric baseline, after which a specifically adapted ASTGCN predicts and compensates for remaining complex residual errors. This MDH-ASTGCN methodology was experimentally validated on two distinct serial manipulators—a 6-DOF gear-driven Universal Robots UR5 and a 7-DOF cable-driven Barrett WAM—using laser tracker measurements, and benchmarked against uncalibrated states and standalone MDH or ASTGCN approaches.
+To address these problems, this paper proposes a hybrid error compensation framework that innovatively combines the modified Denavit–Hartenberg (MDH) geometric calibration method with an Attention‑based Spatial‑Temporal Graph Convolutional Network (ASTGCN), aiming to comprehensively improve the positioning accuracy of serial industrial robots. The approach comprises two phases: first, an accurate geometric kinematic model is constructed via MDH calibration for modeling and compensating geometric errors. Second, a non‑geometric positional residual map, informed by the serial kinematic structure, is developed. An improved ASTGCN then models and predictively compensates for residual non‑geometric errors (e.g., joint clearance, thermal deformation, control system lag), thereby creating a high‑precision compensation mechanism that integrates mechanistic and data‑driven models.
 
-Experimental results confirm that the hybrid MDH-ASTGCN framework yields substantial accuracy improvements for both robots, outperforming baseline methods. For the UR5, mean Euclidean error was reduced from $2.5664 \text{ mm}$ to $0.1549 \text{ mm}$, approaching its $0.1 \text{ mm}$ repeatability. For the more challenging WAM, error was reduced from $17.7661 \text{ mm}$ to $2.9178 \text{ mm}$, a significant improvement, though still outside its $2 \text{ mm}$ repeatability. Key contributions include the novel design and validation of this specific MDH-ASTGCN model for serial robots, the architectural adaptation of ASTGCN for this task, insights from cross-platform validation, and the public release of experimental datasets.
+Experimental validation was performed on two types of industrial robots with different drive mechanisms and degree‑of‑freedom configurations: a 6‑DOF gear‑driven Universal Robots UR5 and a 7‑DOF cable‑driven Barrett WAM. Using high‑precision measurements from a laser tracker, the proposed hybrid method was comparatively evaluated against baseline conditions: uncalibrated performance, MDH calibration alone, and ASTGCN compensation alone. The results demonstrate that the proposed hybrid compensation method significantly improves positioning accuracy for both robots. The average absolute positional error for the UR5 was reduced from $2.5664 \text{ mm}$ to $0.1549 \text{ mm}$, approaching its repeatability of $0.1 \text{ mm}$. For the WAM, the error was reduced from $17.7661 \text{ mm}$ to $2.9178 \text{ mm}$, showcasing the method’s versatility and robustness. Finally, the robot dataset used in this study is publicly released to provide foundational data for related research.
+
+In summary, this paper demonstrates that the organic integration of mechanism‑based kinematic calibration with a deep neural network possessing spatio‑temporal modeling capabilities can effectively enhance the absolute positioning accuracy of industrial robots. This approach offers a feasible and viable technical path for deploying industrial robots in high‑precision applications.
 
 ## Robotic Platforms
 
@@ -40,31 +42,10 @@ For each robot, the following datasets are provided:
 * **UR5:** 1000 poses distributed in a grid-like pattern across its operational workspace.
 * **WAM:** 215 poses distributed in a grid-like pattern across its operational workspace. (The reduced number for WAM was due to practical experimental constraints detailed in the thesis.)
 
-* **Content for each point in these datasets typically includes:**
-    * Desired Target Pose ($P_{target}$) (X, Y, Z coordinates).
-    * Nominal Commanded Joint Angles ($\theta_{cmd}$) derived via $IK(\cdot, k_{nom})$ to reach $P_{target}$.
-    * Measured Actual End-Effector Pose ($P_{actual, nom}$) when $\theta_{cmd}$ is executed on the uncalibrated robot.
-    * Calculated "MDH Residuals" ($\Delta P_{residual, MDH} = P_{target} - FK(\theta_{cmd}, k_{cal})$) after MDH geometric calibration parameters ($k_{cal}$) have been identified using the $(\theta_{cmd}, P_{actual, nom})$ pairs. These residuals were used as targets for ASTGCN training.
-    * The identified $k_{cal}$ parameters for each robot are provided in the thesis (Tables 4.2 and 4.5 respectively).
-
-* **Purpose:**
-    * The $(\theta_{cmd}, P_{actual, nom})$ data was used for identifying the MDH parameters ($k_{cal}$).
-    * The dataset of (features from $P_{target}, \theta_{cmd}$, and the target $\Delta P_{residual, MDH}$) was used for training (90%) and validating (10%) the ASTGCN model.
-
 ### 2. Test Dataset (Random Poses)
 
 * **UR5:** 20 distinct poses, randomly sampled within the operational workspace, unseen during training.
 * **WAM:** 20 distinct poses, randomly sampled within the operational workspace, unseen during training.
-
-* **Content for each point in these datasets typically includes:**
-    * Desired Target Pose ($P_{target}$) (X, Y, Z coordinates).
-    * Measured Actual End-Effector Pose under different compensation schemes:
-        * No Calibration (using $k_{nom}$).
-        * MDH-Only compensation (using $k_{cal}$).
-        * ASTGCN-Only compensation (ASTGCN trained on uncalibrated residuals).
-        * Hybrid (MDH + ASTGCN) compensation.
-
-* **Purpose:** Used for the final evaluation and comparison of all error compensation methods.
 
 ## Data Format
 
@@ -72,10 +53,8 @@ Data is primarily provided in CSV (`.csv`) format. The columns in these files ge
 
 * `step_order`: An integer representing the sequence or index of the pose measurement.
 * `x_t`, `y_t`, `z_t`: The X, Y, and Z coordinates of the **desired target position** of the robot's end-effector. Units are in **millimeters (mm)**.
-* `x_dif`, `y_dif`, `z_dif`: The difference or residual error between the target position and the actual achieved position (or a predicted position, depending on the specific dataset file). The precise definition (e.g., $P_{target} - P_{actual}$ or $P_{target} - P_{predicted}$) for these difference columns is detailed in the thesis, particularly in the context of how $\Delta P_{residual, MDH}$ is calculated (Section 4.1.2.1) and how ASTGCN inputs/outputs are structured. Units are in **millimeters (mm)**.
+* `x_dif`, `y_dif`, `z_dif`: The difference or residual error between the target position and the actual achieved position. Units are in **millimeters (mm)**.
 * `joint_1`, `joint_2`, ..., `joint_N`: The **commanded joint angles** for each joint of the robot (where N is 6 for UR5 and 7 for WAM). Units are in **degrees (°)**.
-
-Please refer to the thesis document, particularly Chapter 4, for the precise definitions of all variables, coordinate frames, and the context of each dataset file (e.g., whether `x_dif` represents uncalibrated error, MDH residual, or ASTGCN predicted residual).
 
 ## How to Use
 
