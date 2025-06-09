@@ -44,7 +44,7 @@ For each robot, the following datasets are provided:
     * Desired Target Pose ($P_{target}$) (X, Y, Z coordinates).
     * Nominal Commanded Joint Angles ($\theta_{cmd}$) derived via $IK(\cdot, k_{nom})$ to reach $P_{target}$.
     * Measured Actual End-Effector Pose ($P_{actual, nom}$) when $\theta_{cmd}$ is executed on the uncalibrated robot.
-    * Calculated "MDH Residuals" ($\Delta P_{residual, MDH} = P_{target} - FK(\theta_{cmd}, k_{cal})$) after MDH geometric calibration parameters ($k_{cal}$) have been identified using the $(\theta_{cmd}, P_{actual, nom})$ pairs. These residuals were used as targets for ASTGCN training.
+    * Calculated "MDH Residuals" ($\Delta P_{residual, MDH}$ = $P_{target}$ - $FK$($\theta_{cmd}$, $k_{cal}$)) after MDH geometric calibration parameters ($k_{cal}$) have been identified using the $(\theta_{cmd}, P_{actual, nom})$ pairs. These residuals were used as targets for ASTGCN training.
     * The identified $k_{cal}$ parameters for each robot are provided in the thesis (Tables 4.2 and 4.5 respectively).
 
 * **Purpose:**
