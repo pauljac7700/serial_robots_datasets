@@ -75,8 +75,6 @@ Data is primarily provided in CSV (`.csv`) format. The columns in these files ge
 * `x_dif`, `y_dif`, `z_dif`: The difference or residual error between the target position and the actual achieved position (or a predicted position, depending on the specific dataset file). The precise definition (e.g., $P_{target} - P_{actual}$ or $P_{target} - P_{predicted}$) for these difference columns is detailed in the thesis, particularly in the context of how $\Delta P_{residual, MDH}$ is calculated (Section 4.1.2.1) and how ASTGCN inputs/outputs are structured. Units are in **millimeters (mm)**.
 * `joint_1`, `joint_2`, ..., `joint_N`: The **commanded joint angles** for each joint of the robot (where N is 6 for UR5 and 7 for WAM). Units are in **degrees (°)**.
 
-Please refer to the thesis document, particularly Chapter 4, for the precise definitions of all variables, coordinate frames, and the context of each dataset file (e.g., whether `x_dif` represents uncalibrated error, MDH residual, or ASTGCN predicted residual).
-
 ## How to Use
 
 These datasets can be used for:
