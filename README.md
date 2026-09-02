@@ -1,77 +1,146 @@
-# Datasets for Hybrid Error Compensation in Serial Industrial Robots
+# Serial robot positioning error datasets: UR5 and Barrett WAM
 
-## Introduction
+Laser-tracker measurements of commanded against realised end-effector positions for
+two serial manipulators with fundamentally different actuation: a 6-DOF gear-driven
+Universal Robots UR5 and a 7-DOF cable-driven Barrett WAM.
 
-This repository contains the experimental datasets collected for the Master's thesis titled **"A Hybrid Error Compensation Method for Enhancing the Pose Accuracy of Serial Industrial Robots"** by Paul Jacobi, submitted to Tsinghua University (Department of Mechanical Engineering) in May 2025, as part of a double degree program with RWTH Aachen University. The research was supervised by Professor Shao Zhufeng.
+These are the datasets behind **"A graph-based hybrid position error compensation
+method for serial industrial robots"**, Yao, Jacobi, Shao and Kibireva, *Applied Soft
+Computing* 203 (2026) 116099, and the Tsinghua master's thesis it grew out of. They
+are released, as promised in the paper, so the results can be reproduced and built on.
 
-The primary goal of releasing these datasets is to provide a benchmark for the robotics research community, fostering further advancements in robot calibration, error compensation techniques, and the development of learning-based models for robotics. We gratefully acknowledge the inspiration from publicly available datasets like that of Landgraf et al. (2021) in our own work.
+- Paper: [doi.org/10.1016/j.asoc.2026.116099](https://doi.org/10.1016/j.asoc.2026.116099)
+- Code: [pauljac7700/ASTGCN-robot-pose-deviation](https://github.com/pauljac7700/ASTGCN-robot-pose-deviation)
 
-## Thesis Abstract
+## Why these measurements are useful
 
-With advancing industrial automation, industrial robots are increasingly utilized in manufacturing, assembly, precision machining, and other fields. Although industrial robots usually have excellent repetitive positioning accuracy, their absolute positioning accuracy often fails to meet the requirements of high‑precision tasks, where positional errors can lead to significant performance degradation and operational instability. Improving the absolute positioning accuracy of industrial robots has thus become an important research direction to ensure the reliability and flexibility of intelligent manufacturing.
+Industrial robots are repeatable but not accurate. The UR5 returns to a taught point
+within 0.1 mm, yet its absolute position is out by roughly 2.6 mm on average, because
+the controller's kinematic model does not match the physical arm. Roughly 90% of that
+gap is geometric, from manufacturing tolerance and assembly misalignment. The rest is
+non-geometric and state-dependent: joint clearance, gear backlash, thermal drift,
+cable elasticity.
 
-To address these problems, this paper proposes a hybrid error compensation framework that innovatively combines the modified Denavit–Hartenberg (MDH) geometric calibration method with an Attention‑based Spatial‑Temporal Graph Convolutional Network (ASTGCN), aiming to comprehensively improve the positioning accuracy of serial industrial robots. The approach comprises two phases: first, an accurate geometric kinematic model is constructed via MDH calibration for modeling and compensating geometric errors. Second, a non‑geometric positional residual map, informed by the serial kinematic structure, is developed. An improved ASTGCN then models and predictively compensates for residual non‑geometric errors (e.g., joint clearance, thermal deformation, control system lag), thereby creating a high‑precision compensation mechanism that integrates mechanistic and data‑driven models.
+Most published calibration work is validated on a single rigid gear-driven arm. What
+makes this pair useful is the contrast: the WAM is cable-driven and starts at 17.8 mm
+of error, an order of magnitude worse and with a different error structure. A method
+that works on both is doing something more general than fitting one machine.
 
-Experimental validation was performed on two types of industrial robots with different drive mechanisms and degree‑of‑freedom configurations: a 6‑DOF gear‑driven Universal Robots UR5 and a 7‑DOF cable‑driven Barrett WAM. Using high‑precision measurements from a laser tracker, the proposed hybrid method was comparatively evaluated against baseline conditions: uncalibrated performance, MDH calibration alone, and ASTGCN compensation alone. The results demonstrate that the proposed hybrid compensation method significantly improves positioning accuracy for both robots. The average absolute positional error for the UR5 was reduced from $2.5664 \text{ mm}$ to $0.1549 \text{ mm}$, approaching its repeatability of $0.1 \text{ mm}$. For the WAM, the error was reduced from $17.7661 \text{ mm}$ to $2.9178 \text{ mm}$, showcasing the method’s versatility and robustness. Finally, the robot dataset used in this study is publicly released to provide foundational data for related research.
+Using these datasets, the hybrid method in the paper reached:
 
-In summary, this paper demonstrates that the organic integration of mechanism‑based kinematic calibration with a deep neural network possessing spatio‑temporal modeling capabilities can effectively enhance the absolute positioning accuracy of industrial robots. This approach offers a feasible and viable technical path for deploying industrial robots in high‑precision applications.
+| Robot | DOF | Drive | Uncompensated | After hybrid compensation | Reduction |
+|---|---|---|---|---|---|
+| Universal Robots UR5 | 6 | Gear | 2.566 mm | 0.155 mm | 94.0% |
+| Barrett WAM | 7 | Cable | 17.766 mm | 2.918 mm | 83.6% |
 
-## Robotic Platforms
+The UR5 figure sits near that robot's own 0.1 mm repeatability, which is the practical
+floor for any compensation method.
 
-Experiments were conducted on two distinct serial robotic manipulators:
+## Contents
 
-1.  **Universal Robots UR5:**
-    * A 6-degrees-of-freedom (DOF) collaborative robotic arm (gear-driven).
-    * Manufacturer-specified repeatability: $\pm 0.1 \text{ mm}$.
-    * Controlled using the Robotics Toolbox for Python.
-2.  **Barrett WAM (Whole Arm Manipulator):**
-    * A 7-DOF cable-driven robotic arm.
-    * Manufacturer-specified repeatability: $2 \text{ mm}$.
-    * Controlled using Libbarrett (native C++ library).
+| File | Poses | Purpose |
+|---|---|---|
+| `UR5/3D_UR5_uncalibrated_grid_cleaned.csv` | 1000 | Calibration, training and validation |
+| `UR5/3D_UR5_uncalibrated_random_cleaned.csv` | 20 | Held-out test |
+| `WAM/3D_WAM_uncalibrated_grid_cleaned.csv` | 216 | Calibration, training and validation |
+| `WAM/3D_WAM_uncalibrated_random_cleaned.csv` | 20 | Held-out test |
 
-## Measurement System
+Grid poses are distributed systematically across the operational workspace. Random
+poses are sampled independently and were never seen during training, so they are the
+honest generalisation test. The WAM grid is smaller than the UR5's because of
+practical constraints during data collection on that platform.
 
-All end-effector pose data was acquired using a **GTS3800 laser tracker system** with a Spherically Mounted Retroreflector (SMR) of nominal diameter 1.5 inches (approximately $38.1 \text{ mm}$). The laser tracker has a specified volumetric accuracy of $15 \text{ µm} + 6 \text{ µm/m}$. Tool-Center Frame (TCF) and robot base frame to tracker frame calibrations were performed prior to data collection.
+All measurements are uncalibrated, meaning they record the robot as it comes, before
+any geometric or learned correction. That is deliberate: it lets you evaluate your own
+calibration pipeline end to end rather than inheriting ours.
 
-## Dataset Description
+## Columns
 
-For each robot, the following datasets are provided:
+| Column | Meaning | Units |
+|---|---|---|
+| `step_order` | Index of the pose in the measurement sequence | integer |
+| `x_t`, `y_t`, `z_t` | Commanded target position of the end-effector | mm |
+| `x_dif`, `y_dif`, `z_dif` | Measured minus commanded position, the positioning error | mm |
+| `joint_1` … `joint_N` | Commanded joint angles, N = 6 for the UR5 and 7 for the WAM | degrees |
 
-### 1. Calibration and Training/Validation Dataset (Grid-like Poses)
+The realised position is `(x_t + x_dif, y_t + y_dif, z_t + z_dif)`. Orientation was not
+measured, so these are position-only datasets.
 
-* **UR5:** 1000 poses distributed in a grid-like pattern across its operational workspace.
-* **WAM:** 215 poses distributed in a grid-like pattern across its operational workspace. (The reduced number for WAM was due to practical experimental constraints detailed in the thesis.)
+## Quick start
 
-### 2. Test Dataset (Random Poses)
+```python
+import pandas as pd
+import numpy as np
 
-* **UR5:** 20 distinct poses, randomly sampled within the operational workspace, unseen during training.
-* **WAM:** 20 distinct poses, randomly sampled within the operational workspace, unseen during training.
+df = pd.read_csv("UR5/3D_UR5_uncalibrated_random_cleaned.csv")
 
-## Data Format
+joints = df[[f"joint_{i}" for i in range(1, 7)]].to_numpy()   # inputs, degrees
+error  = df[["x_dif", "y_dif", "z_dif"]].to_numpy()           # targets, mm
 
-Data is primarily provided in CSV (`.csv`) format. The columns in these files generally follow the structure below:
+print(f"mean absolute position error: {np.linalg.norm(error, axis=1).mean():.3f} mm")
+# 2.565 mm
+```
 
-* `step_order`: An integer representing the sequence or index of the pose measurement.
-* `x_t`, `y_t`, `z_t`: The X, Y, and Z coordinates of the **desired target position** of the robot's end-effector. Units are in **millimeters (mm)**.
-* `x_dif`, `y_dif`, `z_dif`: The difference or residual error between the target position and the actual achieved position. Units are in **millimeters (mm)**.
-* `joint_1`, `joint_2`, ..., `joint_N`: The **commanded joint angles** for each joint of the robot (where N is 6 for UR5 and 7 for WAM). Units are in **degrees (°)**.
+### Sanity check
 
-## How to Use
+Mean absolute position error straight out of each file, with no processing:
 
-These datasets can be used for:
-* Benchmarking novel robot calibration algorithms (geometric, non-geometric, or hybrid).
-* Training and evaluating machine learning models for robot error prediction and compensation.
-* Replicating and extending the results presented in the associated thesis.
-* Educational purposes in robotics and machine learning courses.
+| File | Mean absolute error |
+|---|---|
+| `UR5/..._grid_cleaned.csv` | 2.635 mm |
+| `UR5/..._random_cleaned.csv` | 2.565 mm |
+| `WAM/..._grid_cleaned.csv` | 17.114 mm |
+| `WAM/..._random_cleaned.csv` | 17.623 mm |
+
+The UR5 held-out set reproduces the paper's uncompensated baseline of 2.566 mm to three
+decimal places, so if your loader gives you that number, you are reading the data
+correctly. Use these values to check a pipeline before trusting anything it tells you
+about a new method.
+
+## Measurement setup
+
+Poses were recorded with a GTS3800 laser tracker, using a spherically mounted
+retroreflector of 1.5 inch nominal diameter. The tracker's specified volumetric
+accuracy is 15 µm + 6 µm/m, roughly two orders of magnitude finer than the errors
+being measured, so tracker noise is not a limiting factor. Tool-centre frame and
+base-to-tracker frame calibrations were performed before collection.
+
+The UR5 was commanded through the Robotics Toolbox for Python. The WAM was commanded
+through Libbarrett, its native C++ library.
 
 ## Citation
 
-If you use these datasets in your research, please cite the following thesis:
+Please cite the paper:
 
-Jacobi, P. (2025). *A Hybrid Error Compensation Method for Enhancing the Pose Accuracy of Serial Industrial Robots*. Master's Thesis, Department of Mechanical Engineering, Tsinghua University.
+```bibtex
+@article{yao2026graph,
+  title   = {A graph-based hybrid position error compensation method for serial industrial robots},
+  author  = {Yao, Ming and Jacobi, Paul and Shao, Zhufeng and Kibireva, Anna},
+  journal = {Applied Soft Computing},
+  volume  = {203},
+  pages   = {116099},
+  year    = {2026},
+  doi     = {10.1016/j.asoc.2026.116099}
+}
+```
 
-## Contact and Issues
-For any questions regarding these datasets or to report issues, please contact Paul Jacobi at paul.jacobi@rwth-aachen.de or open an issue in this GitLab repository.
+Ming Yao and Paul Jacobi contributed equally and are co-first authors.
+
+The datasets were originally collected for the master's thesis *A Hybrid Error
+Compensation Method for Enhancing the Pose Accuracy of Serial Industrial Robots*,
+Paul Jacobi, Department of Mechanical Engineering, Tsinghua University, 2025,
+supervised by Prof. Shao Zhufeng, as part of a double degree with RWTH Aachen
+University.
+
+We gratefully acknowledge the example set by openly published calibration datasets,
+in particular Landgraf et al. (2021), which informed how this release was prepared.
 
 ## License
-This dataset is made available under the MIT License. Please see the LICENSE file in this repository.
+
+MIT, see [LICENSE](LICENSE). Use them for anything, including commercially; an
+attribution via the citation above is appreciated.
+
+## Contact
+
+Paul Jacobi, [paul.jacobi@rwth-aachen.de](mailto:paul.jacobi@rwth-aachen.de). Questions
+and corrections are welcome as GitHub issues.
